@@ -37,7 +37,8 @@ An interactive web page that compares, for sites at the Moon's south pole, how l
 ## Validation
 
 - The code's lunar orientation matches astronomy-engine's `Astronomy.RotationAxis('Moon')` (differences below 10⁻¹⁰°).
-- According to the project notes, it was checked against PyEphem on 80 dates between 2026 and 2030: Earth's direction within 0.03° and the Sun's within 0.3°. It has not been checked against SPICE or JPL Horizons.
+- **Checked against NASA's [JPL Horizons System](https://ssd.jpl.nasa.gov/horizons/)** (observer on the lunar surface, airless apparent azimuth and elevation): at Malapert and Shackleton, on 31 daily dates from November 14 to December 14, 2026, the Sun's and Earth's azimuth and elevation agree with Horizons within 0.01°.
+- According to the project notes, it was also checked against PyEphem on 80 dates between 2026 and 2030: Earth's direction within 0.03° and the Sun's within 0.3°. It has not been checked against SPICE directly.
 - Computing a full year (8,760 hourly samples) takes about 160 ms.
 
 ## Code structure
@@ -68,7 +69,6 @@ Download `index.html` and open it in a browser. It needs an internet connection 
 - Real horizon profiles by azimuth, computed from the **LOLA** elevation model of the LRO orbiter (the engine already computes the azimuth for every hour, so the check would simply become `elevation > horizon[azimuth]`).
 - Add real landing sites of south pole missions.
 - Allow negative horizons for elevated sites.
-- Cross-check against JPL Horizons.
 
 ## AI assistance
 
@@ -82,5 +82,6 @@ In line with the NASA Space Apps rules on Super Intelligence (SI) use, this proj
 ## Credits
 
 - [astronomy-engine](https://github.com/cosinekitty/astronomy), by Don Cross (MIT license).
+- Validation data: NASA's [JPL Horizons System](https://ssd.jpl.nasa.gov/horizons/).
 - Rotation model: Archinal et al. (2011), *Report of the IAU Working Group on Cartographic Coordinates and Rotational Elements: 2009*, Celestial Mechanics and Dynamical Astronomy 109, 101–135.
 - Typefaces: Bricolage Grotesque, IBM Plex Mono and Public Sans (Google Fonts).
