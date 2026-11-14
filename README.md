@@ -1,77 +1,77 @@
-# Navegador de misiones lunares CLPS
+# CLPS Lunar Mission Navigator
 
-Página web interactiva que compara, para sitios del polo sur de la Luna, cuánto tiempo ve cada uno el **Sol** y la **Tierra** sobre su horizonte. Sirve para explorar por qué la iluminación (energía solar, temperatura) y la vista directa de la Tierra (comunicaciones) son dos de los factores que más pesan al elegir dónde aterrizar en el polo sur, como en las misiones comerciales del programa CLPS de la NASA.
+An interactive web page that compares, for sites at the Moon's south pole, how long each one sees the **Sun** and the **Earth** above its horizon. It is a way to explore why lighting (solar power, temperature) and a direct view of Earth (communications) are two of the factors that matter most when choosing where to land at the south pole, as in the commercial missions of NASA's CLPS program.
 
-**Ver en vivo:** https://xscarletx.github.io/navegador-misiones-lunares-clps/
+**Try it live:** https://xscarletx.github.io/clps-lunar-mission-navigator/
 
-## Qué hace
+## What it does
 
-- Eliges una **fecha de inicio** y una **duración** (14 días, 30 días, 90 días o 1 año).
-- Eliges **hasta 6 sitios**: 8 cráteres y macizos predefinidos, o uno propio con latitud y longitud.
-- Para cada sitio muestra:
-  - **Con Sol:** porcentaje del periodo con el Sol sobre el horizonte.
-  - **Noche más larga:** el mayor tiempo seguido sin Sol (clave para baterías y supervivencia térmica).
-  - **Con Tierra:** porcentaje del periodo con la Tierra a la vista (enlace directo posible).
-  - **Sin enlace más largo:** el mayor tiempo seguido sin ver la Tierra.
-  - Dos líneas de tiempo (Sol y Tierra) que se recorren tocando o arrastrando.
-- Marca con **"mejor"** el valor más favorable de cada métrica entre los sitios elegidos.
-- Abajo dibuja el **horizonte** del sitio seleccionado (acimut vs. elevación) con el Sol y la Tierra en el momento elegido, sus trayectorias durante todo el periodo y un botón para reproducir el paso del tiempo.
-- Cada sitio tiene un campo **"Horizonte local"** para subir la línea del horizonte (de 0° a 20°) y simular terreno más alto alrededor.
+- Pick a **start date** and a **duration** (14 days, 30 days, 90 days or 1 year).
+- Pick **up to 6 sites**: 8 preset craters and massifs, or your own by latitude and longitude.
+- For each site it shows:
+  - **Sunlit:** percentage of the period with the Sun above the horizon.
+  - **Longest night:** the longest continuous stretch without Sun (key for batteries and thermal survival).
+  - **Earth in view:** percentage of the period with Earth in view (direct link possible).
+  - **Longest link gap:** the longest continuous stretch without seeing Earth.
+  - Two timelines (Sun and Earth) you can tap or drag through.
+- Marks the most favorable value of each metric among the selected sites as **"best"**.
+- Below, it draws the **horizon** of the selected site (azimuth vs. elevation), with the Sun and Earth at the chosen moment, their paths over the whole period, and a button to play time forward.
+- Each site has a **"Local horizon"** field to raise the horizon line (0° to 20°) and simulate higher terrain around it.
 
-## Cómo se calcula
+## How it is computed
 
-1. **Efemérides.** Con [astronomy-engine](https://github.com/cosinekitty/astronomy) se obtienen, cada hora y en UTC, las posiciones geocéntricas de la Luna y del Sol en el sistema ecuatorial J2000. Restándolas salen los vectores **Luna→Sol** y **Luna→Tierra**.
-2. **Orientación de la Luna.** Esos vectores se rotan al sistema fijo a la Luna con el modelo **IAU 2009** (ascensión recta α₀ y declinación δ₀ del polo, y ángulo del meridiano W, con sus términos periódicos):
+1. **Ephemeris.** [astronomy-engine](https://github.com/cosinekitty/astronomy) gives, every hour and in UTC, the geocentric positions of the Moon and the Sun in the J2000 equatorial frame. Subtracting them gives the **Moon→Sun** and **Moon→Earth** vectors.
+2. **Lunar orientation.** Those vectors are rotated into the Moon-fixed frame with the **IAU 2009** model (right ascension α₀ and declination δ₀ of the pole, and the prime meridian angle W, with their periodic terms):
 
-   `r_luna = Rz(W) · Rx(90° − δ₀) · Rz(90° + α₀) · r_J2000`
+   `r_moon = Rz(W) · Rx(90° − δ₀) · Rz(90° + α₀) · r_J2000`
 
-3. **Cielo local.** Para cada sitio (latitud φ, longitud λ) se arma una base local **arriba / este / norte** y se usa la posición del observador sobre la superficie (radio 1737,4 km). Así la dirección de la Tierra incluye el paralaje (unos 0,26°), que importa al mirarla desde la superficie.
+3. **Local sky.** For each site (latitude φ, longitude λ) it builds a local **up / east / north** basis and uses the observer's position on the surface (radius 1737.4 km). This way Earth's direction includes parallax (about 0.26°), which matters when looking at it from the surface.
 
-   `elevación = asin(arriba / |t|)`  ·  `acimut = atan2(este, norte)` (0° = norte, crece hacia el este)
+   `elevation = asin(up / |t|)`  ·  `azimuth = atan2(east, north)` (0° = north, increasing toward the east)
 
-4. **Criterios de visibilidad.**
-   - Sol: visible cuando su **borde superior** pasa el horizonte (radio aparente 0,2665°).
-   - Tierra: visible cuando su **centro** pasa el horizonte.
-   - Si una racha sin Sol o sin Tierra toca el inicio o el final del periodo, se muestra con "≥", porque podría ser más larga.
+4. **Visibility criteria.**
+   - Sun: visible when its **upper limb** clears the horizon (apparent radius 0.2665°).
+   - Earth: visible when its **center** clears the horizon.
+   - If a stretch without Sun or without Earth touches the start or end of the period, it is shown with "≥", because it could be longer.
 
-## Validación
+## Validation
 
-- La orientación lunar del código coincide con `Astronomy.RotationAxis('Moon')` de astronomy-engine (diferencias menores a 10⁻¹⁰°).
-- Según las notas del proyecto, se contrastó con PyEphem en 80 fechas entre 2026 y 2030: dirección de la Tierra dentro de 0,03° y del Sol dentro de 0,3°. No se contrastó con SPICE ni con JPL Horizons.
-- Calcular un año completo (8.760 muestras horarias) toma unos 160 ms.
+- The code's lunar orientation matches astronomy-engine's `Astronomy.RotationAxis('Moon')` (differences below 10⁻¹⁰°).
+- According to the project notes, it was checked against PyEphem on 80 dates between 2026 and 2030: Earth's direction within 0.03° and the Sun's within 0.3°. It has not been checked against SPICE or JPL Horizons.
+- Computing a full year (8,760 hourly samples) takes about 160 ms.
 
-## Estructura del código
+## Code structure
 
-Todo está en un solo archivo, [`index.html`](index.html):
+Everything lives in a single file, [`index.html`](index.html):
 
-- **`LunarEngine`** (primer `<script>`): el motor de cálculo, separado de la interfaz. También se puede cargar en Node (`module.exports`) para probarlo.
-  - `frame(d)`: orientación IAU 2009 para `d` días desde J2000.
-  - `toBody(x, y, z, fr)`: rotación de J2000 al sistema fijo a la Luna.
-  - `buildEphemeris(inicio, horas, paso)`: vectores Sol y Tierra para todo el periodo.
-  - `siteSky(eph, lat, lon)`: acimut y elevación del Sol y la Tierra para un sitio.
-- **Interfaz** (segundo `<script>`): selección de sitios, tarjetas con métricas, líneas de tiempo, gráfico SVG del horizonte y reproducción.
+- **`LunarEngine`** (first `<script>`): the computation engine, separate from the interface. It can also be loaded in Node (`module.exports`) for testing.
+  - `frame(d)`: IAU 2009 orientation for `d` days since J2000.
+  - `toBody(x, y, z, fr)`: rotation from J2000 into the Moon-fixed frame.
+  - `buildEphemeris(start, hours, step)`: Sun and Earth vectors for the whole period.
+  - `siteSky(eph, lat, lon)`: azimuth and elevation of the Sun and Earth for one site.
+- **Interface** (second `<script>`): site selection, metric cards, timelines, the SVG horizon chart and playback.
 
-## Usarlo en tu computador
+## Run it on your computer
 
-Descarga `index.html` y ábrelo en el navegador. Necesita internet para cargar astronomy-engine (desde jsDelivr) y las fuentes (desde Google Fonts).
+Download `index.html` and open it in a browser. It needs an internet connection to load astronomy-engine (from jsDelivr) and the fonts (from Google Fonts).
 
-## Limitaciones conocidas
+## Known limitations
 
-- **El terreno es plano.** El horizonte es una línea recta a la altura que indiques. Cerca del polo el Sol solo sube y baja unos pocos grados, así que el relieve real lo decide todo. Con terreno plano, un cráter cuyo fondo está en sombra permanente (como Shackleton) puede aparecer con Sol el 100 % del tiempo en algunas épocas. **Los resultados no sirven para elegir un sitio de aterrizaje.**
-- **Los sitios son centros de cráteres o macizos**, no sitios de aterrizaje reales, que suelen estar en bordes, crestas y mesetas.
-- **El horizonte solo puede subir** (0° a 20°). No se puede representar una cima elevada, desde la que el horizonte queda por debajo de 0°.
-- **Coordenadas de Shackleton:** la página usa −89,9°; el centro según el [catálogo de la USGS](https://planetarynames.wr.usgs.gov/Feature/5450) es −89,67°, 129,78° E.
-- **Enlace con la Tierra:** solo exige verla sobre el horizonte; no considera elevación mínima de antena ni disponibilidad de estaciones en la Tierra.
+- **The terrain is flat.** The horizon is a straight line at the height you set. Near the pole the Sun only rises and falls by a few degrees, so real terrain decides everything. With flat terrain, a crater whose floor is in permanent shadow (such as Shackleton) can show up as sunlit 100% of the time in some seasons. **The results are not meant for choosing a landing site.**
+- **The sites are crater or massif centers**, not real landing sites, which are usually on rims, ridges and plateaus.
+- **The horizon can only go up** (0° to 20°). It cannot represent a high peak, from which the horizon sits below 0°.
+- **Shackleton coordinates:** the page uses −89.9°; the center according to the [USGS gazetteer](https://planetarynames.wr.usgs.gov/Feature/5450) is −89.67°, 129.78° E.
+- **Earth link:** it only requires Earth to be above the horizon; it ignores minimum antenna elevation and ground-station availability.
 
-## Próximos pasos
+## Next steps
 
-- Perfiles de horizonte reales por acimut, calculados con el modelo de elevación **LOLA** del orbitador LRO (el motor ya calcula el acimut de cada hora, así que bastaría con comparar `elevación > horizonte[acimut]`).
-- Agregar sitios de aterrizaje reales de misiones al polo sur.
-- Permitir horizontes negativos para sitios elevados.
-- Contrastar con JPL Horizons.
+- Real horizon profiles by azimuth, computed from the **LOLA** elevation model of the LRO orbiter (the engine already computes the azimuth for every hour, so the check would simply become `elevation > horizon[azimuth]`).
+- Add real landing sites of south pole missions.
+- Allow negative horizons for elevated sites.
+- Cross-check against JPL Horizons.
 
-## Créditos
+## Credits
 
-- [astronomy-engine](https://github.com/cosinekitty/astronomy), de Don Cross (licencia MIT).
-- Modelo de rotación: Archinal et al. (2011), *Report of the IAU Working Group on Cartographic Coordinates and Rotational Elements: 2009*, Celestial Mechanics and Dynamical Astronomy 109, 101–135.
-- Fuentes tipográficas: Bricolage Grotesque, IBM Plex Mono y Public Sans (Google Fonts).
+- [astronomy-engine](https://github.com/cosinekitty/astronomy), by Don Cross (MIT license).
+- Rotation model: Archinal et al. (2011), *Report of the IAU Working Group on Cartographic Coordinates and Rotational Elements: 2009*, Celestial Mechanics and Dynamical Astronomy 109, 101–135.
+- Typefaces: Bricolage Grotesque, IBM Plex Mono and Public Sans (Google Fonts).
