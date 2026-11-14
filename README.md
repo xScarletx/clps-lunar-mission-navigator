@@ -70,6 +70,15 @@ Download `index.html` and open it in a browser. It needs an internet connection 
 - Allow negative horizons for elevated sites.
 - Cross-check against JPL Horizons.
 
+## AI assistance
+
+In line with the NASA Space Apps rules on Super Intelligence (SI) use, this project acknowledges the AI tools it used:
+
+- **Code:** AI (Claude, by Anthropic) assisted with writing, debugging and reviewing the web app (HTML, CSS and JavaScript).
+- **Documentation and translation:** this README and the English version of the interface were written and translated with AI assistance.
+- **Demo video:** the animations were generated with AI-written code, and the narration is an AI-generated voice ([Kokoro TTS](https://huggingface.co/hexgrad/Kokoro-82M)). The video carries a visible "AI-GENERATED" label.
+- **Metadata:** commits made with AI assistance include a `Co-Authored-By: Claude` line, and `index.html` carries an `ai-assistance` meta tag.
+
 ## Credits
 
 - [astronomy-engine](https://github.com/cosinekitty/astronomy), by Don Cross (MIT license).
