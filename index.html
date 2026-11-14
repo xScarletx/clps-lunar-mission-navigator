@@ -1,12 +1,12 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Navegador de misiones lunares CLPS</title>
+<title>CLPS Lunar Mission Navigator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600&display=swap">
 <style>
-/* Concepto: panel de instrumentos de una sola columna. Controles arriba, una tarjeta por sitio
-   (métricas + dos líneas de tiempo) y debajo el horizonte del sitio elegido, dibujado a escala angular.
-   Color: la interfaz es tinta sobre gris azulado; solo los datos llevan color (Sol ámbar, Tierra azul). */
+/* Concept: a single-column instrument panel. Controls on top, one card per site
+   (metrics + two timelines) and, below, the selected site's horizon drawn to angular scale.
+   Color: the UI is ink on blue-gray; only the data is colored (Sun amber, Earth blue). */
 :root {
   --bg: #ECEEF4;
   --surface: #F8F9FC;
@@ -50,7 +50,7 @@ h1 { margin: 0; font: 700 clamp(28px, 5vw, 44px)/1.04 var(--font-display); lette
 h2 { margin: 0; font: 600 22px/1.15 var(--font-display); letter-spacing: -.005em; text-wrap: balance; }
 .sub { margin: 6px 0 0; max-width: 70ch; color: var(--muted); font-size: 14px; }
 
-/* Controles */
+/* Controls */
 .controls { display: grid; grid-template-columns: minmax(0, 18rem) minmax(0, 1fr); gap: 20px 32px; padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
 @media (max-width: 760px) { .controls { grid-template-columns: minmax(0, 1fr); } }
 .field { display: flex; flex-direction: column; gap: 8px; min-width: 0; border: 0; padding: 0; margin: 0; }
@@ -81,7 +81,7 @@ details.add summary { cursor: pointer; font-size: 14px; color: var(--fg); width:
 .btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); }
 .msg { margin: 0; min-height: 1.4em; font-size: 13px; color: var(--warn); }
 
-/* Comparación */
+/* Comparison */
 .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; font-size: 13px; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .sw { width: 14px; height: 10px; border-radius: 2px; display: inline-block; background: var(--off); }
@@ -120,7 +120,7 @@ details.add summary { cursor: pointer; font-size: 14px; color: var(--fg); width:
 .cursor { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--fg); pointer-events: none; }
 .note { margin: 14px 0 0; max-width: 78ch; font-size: 13px; color: var(--muted); }
 
-/* Horizonte */
+/* Horizon */
 .pano { margin-top: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 12px 12px 16px; }
 .pano svg { display: block; max-width: 100%; }
 .s-plot { fill: var(--bg); }
@@ -155,40 +155,40 @@ details.how ul { padding-left: 20px; }
 
 <main class="app">
   <header>
-    <p class="eyebrow">Polo sur lunar · horas en UTC</p>
-    <h1>Navegador de misiones lunares CLPS</h1>
-    <p class="lede">Elige sitios y fechas de aterrizaje y compara cuánto Sol y cuánta Tierra ve cada uno sobre su horizonte.</p>
+    <p class="eyebrow">Lunar south pole · times in UTC</p>
+    <h1>CLPS Lunar Mission Navigator</h1>
+    <p class="lede">Pick landing sites and dates, and compare how much Sun and how much Earth each one sees above its horizon.</p>
   </header>
 
-  <section class="controls" aria-label="Parámetros">
+  <section class="controls" aria-label="Parameters">
     <div>
       <div class="field">
-        <label class="lbl" for="start">Inicio</label>
+        <label class="lbl" for="start">Start</label>
         <input type="date" id="start" min="2000-01-01" max="2100-12-31">
       </div>
       <fieldset class="field">
-        <legend class="lbl">Duración</legend>
-        <div class="seg" role="radiogroup" aria-label="Duración">
-          <label><input type="radio" name="dur" value="14"><span>14 días</span></label>
-          <label><input type="radio" name="dur" value="30" checked><span>30 días</span></label>
-          <label><input type="radio" name="dur" value="90"><span>90 días</span></label>
-          <label><input type="radio" name="dur" value="365"><span>1 año</span></label>
+        <legend class="lbl">Duration</legend>
+        <div class="seg" role="radiogroup" aria-label="Duration">
+          <label><input type="radio" name="dur" value="14"><span>14 days</span></label>
+          <label><input type="radio" name="dur" value="30" checked><span>30 days</span></label>
+          <label><input type="radio" name="dur" value="90"><span>90 days</span></label>
+          <label><input type="radio" name="dur" value="365"><span>1 year</span></label>
         </div>
       </fieldset>
     </div>
     <div>
       <fieldset class="field">
-        <legend class="lbl">Sitios a comparar (hasta 6)</legend>
+        <legend class="lbl">Sites to compare (up to 6)</legend>
         <div class="chips" id="chips"></div>
-        <p class="hint" id="chiphint">Coordenadas aproximadas del centro de cada cráter o macizo.</p>
+        <p class="hint" id="chiphint">Approximate center coordinates of each crater or massif.</p>
       </fieldset>
       <details class="add">
-        <summary>Agregar un sitio por coordenadas</summary>
+        <summary>Add a site by coordinates</summary>
         <form class="addrow" id="addform" novalidate>
-          <div class="field"><label class="lbl" for="clat">Latitud (°)</label><input type="number" id="clat" step="any" placeholder="-86.5" inputmode="decimal"></div>
-          <div class="field"><label class="lbl" for="clon">Longitud E (°)</label><input type="number" id="clon" step="any" placeholder="12.0" inputmode="decimal"></div>
-          <div class="field"><label class="lbl" for="cname">Nombre (opcional)</label><input type="text" id="cname" maxlength="28" placeholder="Mi sitio"></div>
-          <button class="btn" type="submit">Agregar</button>
+          <div class="field"><label class="lbl" for="clat">Latitude (°)</label><input type="number" id="clat" step="any" placeholder="-86.5" inputmode="decimal"></div>
+          <div class="field"><label class="lbl" for="clon">East longitude (°)</label><input type="number" id="clon" step="any" placeholder="12.0" inputmode="decimal"></div>
+          <div class="field"><label class="lbl" for="cname">Name (optional)</label><input type="text" id="cname" maxlength="28" placeholder="My site"></div>
+          <button class="btn" type="submit">Add</button>
         </form>
         <p class="msg" id="cmsg" role="status"></p>
       </details>
@@ -196,33 +196,33 @@ details.how ul { padding-left: 20px; }
   </section>
 
   <section aria-labelledby="h-comp">
-    <h2 id="h-comp">Comparación</h2>
-    <p class="sub">Toca el nombre de un sitio para ver su horizonte abajo. Toca o arrastra sobre una línea de tiempo para mover el momento.</p>
+    <h2 id="h-comp">Comparison</h2>
+    <p class="sub">Tap a site’s name to see its horizon below. Tap or drag on a timeline to move the moment.</p>
     <div class="legend" aria-hidden="true">
-      <span><i class="sw sun"></i>Sol sobre el horizonte</span>
-      <span><i class="sw earth"></i>Tierra a la vista (enlace directo posible)</span>
-      <span><i class="sw"></i>No visible</span>
+      <span><i class="sw sun"></i>Sun above the horizon</span>
+      <span><i class="sw earth"></i>Earth in view (direct link possible)</span>
+      <span><i class="sw"></i>Not visible</span>
     </div>
     <div class="list" id="listwrap">
       <div class="axis" id="axis" aria-hidden="true"><span class="spacer"></span><div class="ticks" id="ticks"></div></div>
       <div id="board" class="list" style="margin-top:0"></div>
     </div>
-    <p class="note">El horizonte de cada sitio es una línea plana a la altura que indiques (0° por defecto). Todavía no se usa el relieve real del terreno, así que los valores son los de un terreno liso y sirven para comparar, no para decidir un aterrizaje.</p>
+    <p class="note">Each site’s horizon is a flat line at the height you set (0° by default). Real terrain is not used yet, so the values are those of smooth ground: useful for comparing, not for choosing a landing site.</p>
   </section>
 
   <section aria-labelledby="h-pano">
-    <h2 id="h-pano">Horizonte</h2>
+    <h2 id="h-pano">Horizon</h2>
     <p class="sub" id="panosub"></p>
     <div class="pano" id="panowrap">
       <div id="panosvg"></div>
       <div class="timebar">
-        <button class="btn ghost" type="button" id="play" aria-pressed="false">Reproducir</button>
-        <input type="range" id="tslider" min="0" max="0" value="0" aria-label="Momento dentro del periodo">
+        <button class="btn ghost" type="button" id="play" aria-pressed="false">Play</button>
+        <input type="range" id="tslider" min="0" max="0" value="0" aria-label="Moment within the period">
         <span class="tnow" id="tnow"></span>
       </div>
       <div class="tablewrap">
         <table class="read" aria-live="polite">
-          <thead><tr><th>Cuerpo</th><th>Acimut</th><th>Elevación</th><th>Estado</th></tr></thead>
+          <thead><tr><th>Body</th><th>Azimuth</th><th>Elevation</th><th>Status</th></tr></thead>
           <tbody id="readout"></tbody>
         </table>
       </div>
@@ -230,30 +230,30 @@ details.how ul { padding-left: 20px; }
   </section>
 
   <details class="how">
-    <summary>Cómo se calcula y qué falta</summary>
+    <summary>How it is computed, and what is missing</summary>
     <ul>
-      <li>Posiciones de la Luna y el Sol: biblioteca astronomy-engine. Orientación de la Luna: modelo IAU 2009 (marco de Tierra media y eje de rotación). Todo en UTC con pasos de una hora.</li>
-      <li>Contraste con PyEphem en 80 fechas entre 2026 y 2030: la dirección de la Tierra coincide dentro de 0,03° y la del Sol dentro de 0,3°. No se contrastó contra SPICE de la NASA.</li>
-      <li>Sol: cuenta como visible cuando su borde superior pasa el horizonte indicado. Tierra: cuando su centro lo pasa. La Tierra se calcula con paralaje, vista desde la superficie y no desde el centro de la Luna.</li>
-      <li>Acimut: 0° es el norte local y crece hacia el este. En los polos el norte local es la dirección del meridiano 0°.</li>
-      <li>Falta el relieve real (modelo de elevación LOLA del orbitador LRO). Con él, el horizonte sería una silueta distinta para cada sitio y las zonas de sombra permanente aparecerían solas.</li>
-      <li>El enlace directo con la Tierra aquí solo pide verla sobre el horizonte. No considera ángulo mínimo de antena ni disponibilidad de estaciones en la Tierra.</li>
+      <li>Moon and Sun positions: the astronomy-engine library. Lunar orientation: IAU 2009 model (mean Earth / rotation axis frame). Everything in UTC, in one-hour steps.</li>
+      <li>Checked against PyEphem on 80 dates between 2026 and 2030: Earth’s direction agrees within 0.03° and the Sun’s within 0.3°. Not checked against NASA’s SPICE.</li>
+      <li>Sun: counts as visible when its upper limb clears the set horizon. Earth: when its center does. Earth is computed with parallax, as seen from the surface rather than from the Moon’s center.</li>
+      <li>Azimuth: 0° is local north and increases toward the east. At the poles, local north is the direction of the 0° meridian.</li>
+      <li>Missing: real terrain (the LOLA elevation model from the LRO orbiter). With it, each site’s horizon would be its own silhouette, and permanently shadowed regions would show up on their own.</li>
+      <li>The direct-to-Earth link here only requires Earth to be above the horizon. It ignores minimum antenna elevation and ground-station availability.</li>
     </ul>
   </details>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
 <script>
-// Motor de cálculo: posición del Sol y la Tierra vistos desde un punto de la Luna.
-// Usa astronomy-engine (Moon/Sun geocéntricos, J2000) + orientación lunar IAU 2009.
+// Computation engine: position of the Sun and Earth as seen from a point on the Moon.
+// Uses astronomy-engine (geocentric Moon/Sun, J2000) + IAU 2009 lunar orientation.
 var LunarEngine = (function (Astronomy) {
   'use strict';
   var DEG = Math.PI / 180;
-  var R_MOON = 1737.4;          // km, radio medio
+  var R_MOON = 1737.4;          // km, mean radius
   var AU_KM = 149597870.7;
 
-  // Orientación de la Luna (IAU WGCCRE 2009): polo (a0, d0) y meridiano de origen W, en grados.
-  function frame(d) { // d: días TT desde J2000
+  // Lunar orientation (IAU WGCCRE 2009): pole (a0, d0) and prime meridian W, in degrees.
+  function frame(d) { // d: TT days since J2000
     var T = d / 36525;
     var E1 = (125.045 - 0.0529921 * d) * DEG;
     var E2 = (250.089 - 0.1059842 * d) * DEG;
@@ -280,7 +280,7 @@ var LunarEngine = (function (Astronomy) {
     return { a0: a0, d0: d0, W: W };
   }
 
-  // Vector inercial (EQJ) -> vector fijo a la Luna (marco de Tierra media / eje de rotación).
+  // Inertial vector (EQJ) -> Moon-fixed vector (mean Earth / rotation axis frame).
   function toBody(x, y, z, fr) {
     var a = (90 + fr.a0) * DEG, c = Math.cos(a), s = Math.sin(a);
     var x1 = c * x + s * y, y1 = -s * x + c * y, z1 = z;
@@ -290,7 +290,7 @@ var LunarEngine = (function (Astronomy) {
     return [c * x1 + s * y2, -s * x1 + c * y2, z2];
   }
 
-  // Vectores Luna->Sol y Luna->Tierra en el marco lunar (km) en cada paso.
+  // Moon->Sun and Moon->Earth vectors in the lunar frame (km) at each step.
   function bodyVectors(date) {
     var t = Astronomy.MakeTime(date);
     var fr = frame(t.tt);
@@ -306,7 +306,7 @@ var LunarEngine = (function (Astronomy) {
     return { lon: Math.atan2(v[1], v[0]) / DEG, lat: Math.asin(v[2] / r) / DEG, dist: r };
   }
 
-  // Acimut (desde el norte local, hacia el este) y elevación de un cuerpo visto desde un sitio.
+  // Azimuth (from local north, toward the east) and elevation of a body seen from a site.
   function siteBasis(latDeg, lonDeg) {
     var p = latDeg * DEG, l = lonDeg * DEG;
     var sp = Math.sin(p), cp = Math.cos(p), sl = Math.sin(l), cl = Math.cos(l);
@@ -324,7 +324,7 @@ var LunarEngine = (function (Astronomy) {
     return { az: az, el: Math.asin(up / dist) / DEG };
   }
 
-  // Efemérides del periodo: hours+1 muestras horarias desde startMs (UTC).
+  // Ephemeris for the period: hours+1 hourly samples from startMs (UTC).
   function buildEphemeris(startMs, hours, stepHours) {
     var step = stepHours || 1;
     var n = Math.floor(hours / step) + 1;
@@ -367,22 +367,22 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
   var E = window.LunarEngine;
   var board = document.getElementById('board');
   if (!window.Astronomy || !E) {
-    board.innerHTML = '<p class="err">No se pudo cargar la biblioteca de efemérides. Revisa tu conexión y recarga la página.</p>';
+    board.innerHTML = '<p class="err">Could not load the ephemeris library. Check your connection and reload the page.</p>';
     return;
   }
 
   var SUN_R = 0.2665, SUN_D = 0.533, EARTH_D = 1.9, MAXSITES = 6;
-  var MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   var PRESETS = [
-    { id: 'malapert', name: 'Macizo Malapert', lat: -86.0, lon: 0.0 },
-    { id: 'shackleton', name: 'Cráter Shackleton', lat: -89.9, lon: 129.8 },
-    { id: 'haworth', name: 'Cráter Haworth', lat: -87.5, lon: -5.0 },
-    { id: 'nobile', name: 'Cráter Nobile', lat: -85.2, lon: 53.3 },
-    { id: 'faustini', name: 'Cráter Faustini', lat: -87.3, lon: 77.0 },
-    { id: 'degerlache', name: 'Cráter de Gerlache', lat: -88.5, lon: -87.1 },
-    { id: 'cabeus', name: 'Cráter Cabeus', lat: -84.9, lon: -35.5 },
-    { id: 'amundsen', name: 'Cráter Amundsen', lat: -84.5, lon: 82.8 }
+    { id: 'malapert', name: 'Malapert Massif', lat: -86.0, lon: 0.0 },
+    { id: 'shackleton', name: 'Shackleton Crater', lat: -89.9, lon: 129.8 },
+    { id: 'haworth', name: 'Haworth Crater', lat: -87.5, lon: -5.0 },
+    { id: 'nobile', name: 'Nobile Crater', lat: -85.2, lon: 53.3 },
+    { id: 'faustini', name: 'Faustini Crater', lat: -87.3, lon: 77.0 },
+    { id: 'degerlache', name: 'de Gerlache Crater', lat: -88.5, lon: -87.1 },
+    { id: 'cabeus', name: 'Cabeus Crater', lat: -84.9, lon: -35.5 },
+    { id: 'amundsen', name: 'Amundsen Crater', lat: -84.5, lon: 82.8 }
   ];
   var DEFAULT_ON = ['malapert', 'shackleton', 'haworth', 'nobile'];
 
@@ -400,19 +400,19 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
     cmsg: document.getElementById('cmsg')
   };
 
-  /* ---------- utilidades ---------- */
+  /* ---------- utilities ---------- */
   function pad(v) { return v < 10 ? '0' + v : '' + v; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function num(v, d) { return v.toFixed(d).replace('.', ','); }
-  function signed(v, d) { var s = v.toFixed(d).replace('.', ','); if (v < 0 && /^-/.test(s)) return '−' + s.slice(1); return (v >= 0 ? '+' : '') + s; }
+  function num(v, d) { return v.toFixed(d); }
+  function signed(v, d) { var s = v.toFixed(d); if (v < 0 && /^-/.test(s)) return '−' + s.slice(1); return (v >= 0 ? '+' : '') + s; }
   function fmtDate(ms) { var d = new Date(ms); return d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
   function fmtDay(ms) { var d = new Date(ms); return d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()]; }
   function fmtDT(ms) { var d = new Date(ms); return fmtDate(ms) + ' · ' + pad(d.getUTCHours()) + ':00 UTC'; }
   function fmtLat(v) { return num(Math.abs(v), 1) + '° ' + (v < 0 ? 'S' : 'N'); }
-  function fmtLon(v) { return num(Math.abs(v), 1) + '° ' + (v < 0 ? 'O' : 'E'); }
+  function fmtLon(v) { return num(Math.abs(v), 1) + '° ' + (v < 0 ? 'W' : 'E'); }
   function fmtHours(h, edge) {
     var s;
-    if (h <= 0) return 'ninguna';
+    if (h <= 0) return 'none';
     if (h < 24) s = h + ' h';
     else { var d = Math.floor(h / 24), r = h % 24; s = d + ' d' + (r ? ' ' + r + ' h' : ''); }
     return (edge ? '≥ ' : '') + s;
@@ -427,7 +427,7 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
     return Date.UTC(+m[1], +m[2] - 1, +m[3]);
   }
 
-  /* ---------- cálculo por sitio ---------- */
+  /* ---------- per-site computation ---------- */
   function getSky(s) {
     var key = s.lat + '|' + s.lon;
     if (!cache[key]) cache[key] = E.siteSky(eph, s.lat, s.lon);
@@ -470,7 +470,7 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
     };
   }
 
-  /* ---------- ticks y tarjetas ---------- */
+  /* ---------- ticks and cards ---------- */
   function tickStep(width) {
     var max = Math.max(2, Math.floor(width / 84)), c = [1, 2, 5, 7, 10, 14, 30, 61, 91, 122];
     for (var i = 0; i < c.length; i++) if (days / c[i] <= max) return c[i];
@@ -510,15 +510,15 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
       '<div class="ident">' +
         '<button type="button" class="pick">' + esc(s.name) + '</button>' +
         '<p class="co">' + fmtLat(s.lat) + ' · ' + fmtLon(s.lon) + '</p>' +
-        '<label class="maskl">Horizonte local <input type="number" class="mask-in" min="0" max="20" step="0.5" value="' + s.mask + '" inputmode="decimal" aria-label="Elevación del horizonte local de ' + esc(s.name) + ' en grados"> °</label>' +
+        '<label class="maskl">Local horizon <input type="number" class="mask-in" min="0" max="20" step="0.5" value="' + s.mask + '" inputmode="decimal" aria-label="Local horizon elevation for ' + esc(s.name) + ', in degrees"> °</label>' +
       '</div>' +
-      '<div class="m m-sun"><span class="ml">Con Sol</span><span class="mv" data-k="sunPct"></span><span class="mbar"><i></i></span><span class="ms">del periodo</span></div>' +
-      '<div class="m"><span class="ml">Noche más larga</span><span class="mv" data-k="dark"></span><span class="ms">sin Sol, seguida</span></div>' +
-      '<div class="m m-earth"><span class="ml">Con Tierra</span><span class="mv" data-k="earthPct"></span><span class="mbar"><i></i></span><span class="ms">del periodo</span></div>' +
-      '<div class="m"><span class="ml">Sin enlace más largo</span><span class="mv" data-k="gap"></span><span class="ms">sin ver la Tierra, seguido</span></div>' +
+      '<div class="m m-sun"><span class="ml">Sunlit</span><span class="mv" data-k="sunPct"></span><span class="mbar"><i></i></span><span class="ms">of the period</span></div>' +
+      '<div class="m"><span class="ml">Longest night</span><span class="mv" data-k="dark"></span><span class="ms">without Sun, in a row</span></div>' +
+      '<div class="m m-earth"><span class="ml">Earth in view</span><span class="mv" data-k="earthPct"></span><span class="mbar"><i></i></span><span class="ms">of the period</span></div>' +
+      '<div class="m"><span class="ml">Longest link gap</span><span class="mv" data-k="gap"></span><span class="ms">without seeing Earth, in a row</span></div>' +
       '<div class="strips">' +
-        '<div class="srow"><span class="slab">Sol</span><div class="track" data-k="sun"></div></div>' +
-        '<div class="srow"><span class="slab">Tierra</span><div class="track" data-k="earth"></div></div>' +
+        '<div class="srow"><span class="slab">Sun</span><div class="track" data-k="sun"></div></div>' +
+        '<div class="srow"><span class="slab">Earth</span><div class="track" data-k="earth"></div></div>' +
       '</div>';
     return c;
   }
@@ -528,8 +528,8 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
     var m = metrics(s);
     mcache[s.id] = m;
     function setv(k, html) { c.querySelector('[data-k="' + k + '"]').innerHTML = html; }
-    setv('sunPct', num(m.sunPct, 1) + ' %');
-    setv('earthPct', num(m.earthPct, 1) + ' %');
+    setv('sunPct', num(m.sunPct, 1) + '%');
+    setv('earthPct', num(m.earthPct, 1) + '%');
     setv('dark', fmtHours(m.dark.len, m.dark.edge));
     setv('gap', fmtHours(m.gap.len, m.gap.edge));
     c.querySelector('.m-sun .mbar i').style.width = m.sunPct.toFixed(1) + '%';
@@ -554,7 +554,7 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
       var worst = sp[1] > 0 ? Math.min.apply(null, vals) : Math.max.apply(null, vals);
       if (best === worst) return;
       cards.forEach(function (c, i) {
-        if (vals[i] === best) c.querySelector('[data-k="' + sp[0] + '"]').insertAdjacentHTML('beforeend', '<span class="best" title="Mejor valor del grupo">mejor</span>');
+        if (vals[i] === best) c.querySelector('[data-k="' + sp[0] + '"]').insertAdjacentHTML('beforeend', '<span class="best" title="Best value in the group">best</span>');
       });
     });
   }
@@ -573,7 +573,7 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
     });
   }
 
-  /* ---------- chips de sitios ---------- */
+  /* ---------- site chips ---------- */
   function renderChips() {
     var onCount = selectedSites().length;
     el.chips.innerHTML = '';
@@ -582,15 +582,15 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
       b.type = 'button'; b.className = 'chip'; b.dataset.id = s.id;
       b.setAttribute('aria-pressed', s.on ? 'true' : 'false');
       b.disabled = !s.on && onCount >= MAXSITES;
-      if (b.disabled) b.title = 'Ya elegiste ' + MAXSITES + ' sitios';
+      if (b.disabled) b.title = 'You already picked ' + MAXSITES + ' sites';
       b.innerHTML = esc(s.name) + '<small>' + fmtLat(s.lat) + ' · ' + fmtLon(s.lon) + '</small>';
       el.chips.appendChild(b);
     });
   }
 
-  /* ---------- horizonte (SVG) ---------- */
+  /* ---------- horizon (SVG) ---------- */
   var geo = null;
-  var CARD = { 0: 'N', 45: 'NE', 90: 'E', 135: 'SE', 180: 'S', 225: 'SO', 270: 'O', 315: 'NO', 360: 'N' };
+  var CARD = { 0: 'N', 45: 'NE', 90: 'E', 135: 'SE', 180: 'S', 225: 'SW', 270: 'W', 315: 'NW', 360: 'N' };
   function drawPano() {
     var s = siteById(selId);
     if (!s || !eph) return;
@@ -607,7 +607,7 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
     function X(a) { return padL + a / 360 * pw; }
     function Y(e) { return padT + (ymax - e) / (ymax - ymin) * ph; }
     geo = { X: X, Y: Y, pxDeg: ph / (ymax - ymin), padL: padL, pw: pw, W: W };
-    var out = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Posición del Sol y la Tierra respecto al horizonte de ' + esc(s.name) + '">';
+    var out = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Position of the Sun and Earth relative to the horizon of ' + esc(s.name) + '">';
     out += '<rect class="s-plot" x="' + padL + '" y="' + padT + '" width="' + pw + '" height="' + ph + '"/>';
     var y;
     for (y = Math.ceil(ymin / yStep) * yStep; y <= ymax; y += yStep) {
@@ -624,7 +624,7 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
     out += '<rect class="s-terrain" x="' + padL + '" y="' + yh.toFixed(1) + '" width="' + pw + '" height="' + Math.max(0, padT + ph - yh).toFixed(1) + '"/>';
     if (s.mask !== 0) out += '<line class="s-zero" x1="' + padL + '" x2="' + (padL + pw) + '" y1="' + Y(0).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '"/>';
     out += '<line class="s-hz" x1="' + padL + '" x2="' + (padL + pw) + '" y1="' + yh.toFixed(1) + '" y2="' + yh.toFixed(1) + '"/>';
-    out += '<text class="s-ax" x="' + (padL + pw - 6) + '" y="' + Math.min(padT + ph - 6, yh + 15).toFixed(1) + '" text-anchor="end">horizonte local ' + signed(s.mask, 1) + '°</text>';
+    out += '<text class="s-ax" x="' + (padL + pw - 6) + '" y="' + Math.min(padT + ph - 6, yh + 15).toFixed(1) + '" text-anchor="end">local horizon ' + signed(s.mask, 1) + '°</text>';
     var k = Math.max(1, Math.ceil(n / 1500));
     ['sun', 'earth'].forEach(function (b) {
       var d = '', prev = null;
@@ -643,8 +643,8 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
     var s = siteById(selId), g = document.getElementById('mk');
     if (!s || !g || !geo) return;
     var sd = getSky(s), i = cursor, html = '';
-    [['sun', 'Sol', Math.max(3, SUN_D / 2 * geo.pxDeg), sd.el.sun[i] + SUN_R > s.mask],
-     ['earth', 'Tierra', Math.max(5, EARTH_D / 2 * geo.pxDeg), sd.el.earth[i] > s.mask]].forEach(function (b) {
+    [['sun', 'Sun', Math.max(3, SUN_D / 2 * geo.pxDeg), sd.el.sun[i] + SUN_R > s.mask],
+     ['earth', 'Earth', Math.max(5, EARTH_D / 2 * geo.pxDeg), sd.el.earth[i] > s.mask]].forEach(function (b) {
       var cx = geo.X(sd.az[b[0]][i]), cy = geo.Y(sd.el[b[0]][i]);
       html += '<circle class="s-m' + b[0] + (b[3] ? '' : ' s-moff') + '" cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + b[2].toFixed(1) + '"/>';
       var tx = clamp(cx, geo.padL + 22, geo.padL + geo.pw - 22);
@@ -661,16 +661,16 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
     }
     var su = sd.el.sun[i] + SUN_R > s.mask, ea = sd.el.earth[i] > s.mask;
     el.read.innerHTML =
-      row('sun', 'Sol', sd.az.sun[i], sd.el.sun[i], su, 'sobre el horizonte', 'bajo el horizonte') +
-      row('earth', 'Tierra', sd.az.earth[i], sd.el.earth[i], ea, 'a la vista', 'oculta');
+      row('sun', 'Sun', sd.az.sun[i], sd.el.sun[i], su, 'above the horizon', 'below the horizon') +
+      row('earth', 'Earth', sd.az.earth[i], sd.el.earth[i], ea, 'in view', 'hidden');
   }
   function panoHeading() {
     var s = siteById(selId);
     if (!s) return;
-    el.panosub.textContent = s.name + ' (' + fmtLat(s.lat) + ', ' + fmtLon(s.lon) + '). Sol y Tierra dibujados a escala angular. Las líneas finas son sus trayectorias durante todo el periodo. Acimut desde el norte local.';
+    el.panosub.textContent = s.name + ' (' + fmtLat(s.lat) + ', ' + fmtLon(s.lon) + '). Sun and Earth drawn to angular scale. The thin lines are their paths over the whole period. Azimuth from local north.';
   }
 
-  /* ---------- cursor de tiempo ---------- */
+  /* ---------- time cursor ---------- */
   function setCursor(i) {
     cursor = clamp(i, 0, n - 1);
     var pct = ((cursor + 0.5) / n * 100).toFixed(3) + '%';
@@ -683,10 +683,10 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
     drawMarkers();
   }
 
-  /* ---------- reproducción ---------- */
+  /* ---------- playback ---------- */
   function stopPlay() {
     playing = false; cancelAnimationFrame(rafId);
-    el.play.textContent = 'Reproducir'; el.play.setAttribute('aria-pressed', 'false');
+    el.play.textContent = 'Play'; el.play.setAttribute('aria-pressed', 'false');
   }
   function frame(t) {
     if (!playing) return;
@@ -699,11 +699,11 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
   el.play.addEventListener('click', function () {
     if (playing) { stopPlay(); return; }
     playing = true; carry = 0; lastT = performance.now();
-    el.play.textContent = 'Pausar'; el.play.setAttribute('aria-pressed', 'true');
+    el.play.textContent = 'Pause'; el.play.setAttribute('aria-pressed', 'true');
     rafId = requestAnimationFrame(frame);
   });
 
-  /* ---------- eventos ---------- */
+  /* ---------- events ---------- */
   var dragging = null;
   function scrub(e) {
     var r = dragging.getBoundingClientRect();
@@ -739,8 +739,8 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
     var b = e.target.closest('.chip');
     if (!b || b.disabled) return;
     var s = siteById(b.dataset.id);
-    if (s.on && selectedSites().length === 1) { el.hint.textContent = 'Deja al menos un sitio elegido.'; return; }
-    el.hint.textContent = 'Coordenadas aproximadas del centro de cada cráter o macizo.';
+    if (s.on && selectedSites().length === 1) { el.hint.textContent = 'Keep at least one site selected.'; return; }
+    el.hint.textContent = 'Approximate center coordinates of each crater or massif.';
     s.on = !s.on;
     if (!siteById(selId).on) selId = selectedSites()[0].id;
     renderChips(); buildBoard(); panoHeading(); drawPano(); drawReadout();
@@ -749,14 +749,14 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
   el.form.addEventListener('submit', function (e) {
     e.preventDefault();
     var lat = parseFloat(document.getElementById('clat').value), lon = parseFloat(document.getElementById('clon').value);
-    if (!isFinite(lat) || lat < -90 || lat > 90) { el.cmsg.textContent = 'La latitud debe estar entre -90 y 90 grados.'; return; }
-    if (!isFinite(lon) || lon < -180 || lon > 360) { el.cmsg.textContent = 'La longitud debe estar entre -180 y 360 grados este.'; return; }
+    if (!isFinite(lat) || lat < -90 || lat > 90) { el.cmsg.textContent = 'Latitude must be between -90 and 90 degrees.'; return; }
+    if (!isFinite(lon) || lon < -180 || lon > 360) { el.cmsg.textContent = 'Longitude must be between -180 and 360 degrees east.'; return; }
     if (lon > 180) lon -= 360;
     customCount++;
-    var name = document.getElementById('cname').value.trim() || ('Sitio ' + num(lat, 1) + ', ' + num(lon, 1));
+    var name = document.getElementById('cname').value.trim() || ('Site ' + num(lat, 1) + ', ' + num(lon, 1));
     var turnOn = selectedSites().length < MAXSITES;
     sites.push({ id: 'c' + customCount, name: name, lat: lat, lon: lon, on: turnOn, mask: 0 });
-    el.cmsg.textContent = turnOn ? '' : 'Sitio agregado, pero ya hay ' + MAXSITES + ' elegidos. Quita uno para verlo.';
+    el.cmsg.textContent = turnOn ? '' : 'Site added, but ' + MAXSITES + ' are already selected. Remove one to see it.';
     el.form.reset();
     renderChips(); buildBoard(); drawPano(); drawReadout();
   });
@@ -784,7 +784,7 @@ if (typeof module !== 'undefined') module.exports = LunarEngine;
     ro.observe(board); ro.observe(el.panowrap);
   } else window.addEventListener('resize', onResize);
 
-  /* ---------- recalcular el periodo ---------- */
+  /* ---------- recompute the period ---------- */
   function recompute() {
     stopPlay();
     var t0 = startMs();
