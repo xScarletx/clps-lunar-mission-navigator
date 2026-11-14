@@ -1,0 +1,806 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Navegador de misiones lunares CLPS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+/* Concepto: panel de instrumentos de una sola columna. Controles arriba, una tarjeta por sitio
+   (métricas + dos líneas de tiempo) y debajo el horizonte del sitio elegido, dibujado a escala angular.
+   Color: la interfaz es tinta sobre gris azulado; solo los datos llevan color (Sol ámbar, Tierra azul). */
+:root {
+  --bg: #ECEEF4;
+  --surface: #F8F9FC;
+  --surface2: #E2E5EE;
+  --fg: #121828;
+  --muted: #536079;
+  --line: #C8CEDB;
+  --off: #D3D8E4;
+  --sun: #B87400;
+  --earth: #1E6BD0;
+  --terrain: #C4CADA;
+  --ink: #121828;
+  --on-ink: #F8F9FC;
+  --focus: #1E6BD0;
+  --warn: #A33A2B;
+  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D111E; --surface: #141A2B; --surface2: #1B2236; --fg: #E8EBF4; --muted: #9AA3BC;
+    --line: #2B3350; --off: #222A42; --sun: #F4B73F; --earth: #5FA6FF; --terrain: #232B45;
+    --ink: #E8EBF4; --on-ink: #0D111E; --focus: #7FB6FF; --warn: #FF8A78; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D111E; --surface: #141A2B; --surface2: #1B2236; --fg: #E8EBF4; --muted: #9AA3BC;
+  --line: #2B3350; --off: #222A42; --sun: #F4B73F; --earth: #5FA6FF; --terrain: #232B45;
+  --ink: #E8EBF4; --on-ink: #0D111E; --focus: #7FB6FF; --warn: #FF8A78; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--font-body); }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.app { max-width: 1080px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: flex; flex-direction: column; gap: 32px; }
+.eyebrow { margin: 0 0 8px; font: 500 11px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font: 700 clamp(28px, 5vw, 44px)/1.04 var(--font-display); letter-spacing: -.015em; text-wrap: balance; }
+.lede { margin: 12px 0 0; max-width: 62ch; color: var(--muted); font-size: 16px; }
+h2 { margin: 0; font: 600 22px/1.15 var(--font-display); letter-spacing: -.005em; text-wrap: balance; }
+.sub { margin: 6px 0 0; max-width: 70ch; color: var(--muted); font-size: 14px; }
+
+/* Controles */
+.controls { display: grid; grid-template-columns: minmax(0, 18rem) minmax(0, 1fr); gap: 20px 32px; padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
+@media (max-width: 760px) { .controls { grid-template-columns: minmax(0, 1fr); } }
+.field { display: flex; flex-direction: column; gap: 8px; min-width: 0; border: 0; padding: 0; margin: 0; }
+.field + .field { margin-top: 16px; }
+.lbl { font: 500 11px/1 var(--font-mono); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); padding: 0; }
+input[type="date"], input[type="number"], input[type="text"] { background: var(--bg); border: 1px solid var(--line); border-radius: 3px; padding: 8px 10px; min-height: 40px; color: var(--fg); font-family: var(--font-mono); font-size: 14px; max-width: 100%; }
+.seg { display: flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 3px; overflow: hidden; background: var(--bg); }
+.seg label { flex: 1 1 auto; text-align: center; padding: 9px 10px; min-height: 40px; cursor: pointer; font-size: 14px; border-right: 1px solid var(--line); white-space: nowrap; }
+.seg label:last-child { border-right: 0; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg input:checked + span { color: var(--on-ink); }
+.seg label:has(input:checked) { background: var(--ink); color: var(--on-ink); }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: -2px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { min-height: 40px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 3px; background: var(--bg); cursor: pointer; font-size: 14px; text-align: left; }
+.chip small { display: block; font: 400 11px/1.2 var(--font-mono); color: var(--muted); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+.chip[aria-pressed="true"] small { color: inherit; opacity: .75; }
+.chip:disabled { opacity: .45; cursor: not-allowed; }
+.hint { margin: 0; font-size: 13px; color: var(--muted); }
+details.add { margin-top: 4px; }
+details.add summary { cursor: pointer; font-size: 14px; color: var(--fg); width: fit-content; padding-block: 6px; }
+.addrow { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; padding-top: 8px; }
+.addrow .field + .field { margin-top: 0; }
+.addrow input[type="number"] { width: 8.5rem; }
+.addrow input[type="text"] { width: 12rem; }
+.btn { min-height: 40px; padding: 8px 16px; border: 1px solid var(--ink); border-radius: 3px; background: var(--ink); color: var(--on-ink); cursor: pointer; font-weight: 500; }
+.btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); }
+.msg { margin: 0; min-height: 1.4em; font-size: 13px; color: var(--warn); }
+
+/* Comparación */
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 10px; border-radius: 2px; display: inline-block; background: var(--off); }
+.sw.sun { background: var(--sun); } .sw.earth { background: var(--earth); }
+.list { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.axis { display: flex; gap: 10px; padding-inline: 17px; }
+.axis .spacer { flex: 0 0 52px; }
+.axis .ticks { position: relative; flex: 1; height: 18px; }
+.tl { position: absolute; top: 0; transform: translateX(-50%); font: 11px/1 var(--font-mono); color: var(--muted); white-space: nowrap; }
+.card { display: grid; grid-template-columns: minmax(0, 1.35fr) repeat(4, minmax(0, 1fr)); gap: 14px 20px; padding: 16px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); }
+.card.sel { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+@media (max-width: 820px) { .card { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .ident { grid-column: 1 / -1; } }
+.ident { min-width: 0; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.pick { all: unset; cursor: pointer; font: 600 18px/1.2 var(--font-display); border-bottom: 2px solid transparent; }
+.pick:hover { border-bottom-color: var(--line); }
+.pick:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.card.sel .pick { border-bottom-color: var(--ink); }
+.co { margin: 0; font: 400 12px/1.4 var(--font-mono); color: var(--muted); }
+.maskl { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; color: var(--muted); }
+.maskl input { width: 4.8rem; min-height: 34px; padding: 4px 8px; }
+.m { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ml { font: 500 11px/1.2 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.mv { font: 500 22px/1.15 var(--font-mono); font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ms { font-size: 12px; color: var(--muted); }
+.mbar { height: 5px; background: var(--off); border-radius: 2px; overflow: hidden; }
+.mbar i { display: block; height: 100%; }
+.m-sun .mbar i { background: var(--sun); } .m-earth .mbar i { background: var(--earth); }
+.best { font: 500 10px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; padding: 3px 5px; border: 1px solid var(--fg); border-radius: 2px; }
+.strips { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; }
+.srow { display: flex; align-items: center; gap: 10px; }
+.slab { flex: 0 0 52px; font: 500 12px/1 var(--font-mono); color: var(--muted); }
+.track { position: relative; flex: 1; height: 16px; background: var(--off); border-radius: 2px; overflow: hidden; cursor: ew-resize; touch-action: pan-y; }
+.run { position: absolute; top: 0; bottom: 0; }
+.run.sun { background: var(--sun); } .run.earth { background: var(--earth); }
+.gl { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--surface); opacity: .8; pointer-events: none; }
+.cursor { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--fg); pointer-events: none; }
+.note { margin: 14px 0 0; max-width: 78ch; font-size: 13px; color: var(--muted); }
+
+/* Horizonte */
+.pano { margin-top: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 12px 12px 16px; }
+.pano svg { display: block; max-width: 100%; }
+.s-plot { fill: var(--bg); }
+.s-grid { stroke: var(--line); stroke-width: 1; }
+.s-terrain { fill: var(--terrain); }
+.s-hz { stroke: var(--fg); stroke-width: 1.5; }
+.s-zero { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; }
+.s-ax { fill: var(--muted); font: 11px var(--font-mono); }
+.s-lbl { fill: var(--fg); font: 500 12px var(--font-mono); }
+.s-psun { fill: none; stroke: var(--sun); stroke-width: 1.4; opacity: .55; }
+.s-pearth { fill: none; stroke: var(--earth); stroke-width: 1.4; opacity: .55; }
+.s-msun { fill: var(--sun); } .s-mearth { fill: var(--earth); }
+.s-moff { stroke-width: 1.6; stroke-dasharray: 3 2; }
+.s-moff.s-msun { fill: none; stroke: var(--sun); } .s-moff.s-mearth { fill: none; stroke: var(--earth); }
+.timebar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 12px; }
+.timebar input[type="range"] { flex: 1 1 220px; min-width: 0; accent-color: var(--ink); height: 28px; }
+.tnow { font: 500 14px/1.2 var(--font-mono); font-variant-numeric: tabular-nums; }
+.tablewrap { overflow-x: auto; margin-top: 12px; }
+table.read { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.read th { text-align: left; font: 500 11px/1.2 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 6px 12px 6px 0; border-bottom: 1px solid var(--line); }
+table.read td { padding: 8px 12px 8px 0; border-bottom: 1px solid var(--line); font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.read td:first-child { font-family: var(--font-body); font-weight: 600; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: -1px; }
+.dot.sun { background: var(--sun); } .dot.earth { background: var(--earth); }
+.state-on { font-weight: 500; }
+details.how { border: 1px solid var(--line); border-radius: 4px; background: var(--surface); padding: 6px 16px; }
+details.how summary { cursor: pointer; padding-block: 10px; font: 600 16px var(--font-display); }
+details.how p, details.how li { max-width: 78ch; color: var(--muted); font-size: 14px; }
+details.how ul { padding-left: 20px; }
+.err { padding: 16px; border: 1px solid var(--warn); border-radius: 4px; color: var(--warn); }
+</style>
+
+<main class="app">
+  <header>
+    <p class="eyebrow">Polo sur lunar · horas en UTC</p>
+    <h1>Navegador de misiones lunares CLPS</h1>
+    <p class="lede">Elige sitios y fechas de aterrizaje y compara cuánto Sol y cuánta Tierra ve cada uno sobre su horizonte.</p>
+  </header>
+
+  <section class="controls" aria-label="Parámetros">
+    <div>
+      <div class="field">
+        <label class="lbl" for="start">Inicio</label>
+        <input type="date" id="start" min="2000-01-01" max="2100-12-31">
+      </div>
+      <fieldset class="field">
+        <legend class="lbl">Duración</legend>
+        <div class="seg" role="radiogroup" aria-label="Duración">
+          <label><input type="radio" name="dur" value="14"><span>14 días</span></label>
+          <label><input type="radio" name="dur" value="30" checked><span>30 días</span></label>
+          <label><input type="radio" name="dur" value="90"><span>90 días</span></label>
+          <label><input type="radio" name="dur" value="365"><span>1 año</span></label>
+        </div>
+      </fieldset>
+    </div>
+    <div>
+      <fieldset class="field">
+        <legend class="lbl">Sitios a comparar (hasta 6)</legend>
+        <div class="chips" id="chips"></div>
+        <p class="hint" id="chiphint">Coordenadas aproximadas del centro de cada cráter o macizo.</p>
+      </fieldset>
+      <details class="add">
+        <summary>Agregar un sitio por coordenadas</summary>
+        <form class="addrow" id="addform" novalidate>
+          <div class="field"><label class="lbl" for="clat">Latitud (°)</label><input type="number" id="clat" step="any" placeholder="-86.5" inputmode="decimal"></div>
+          <div class="field"><label class="lbl" for="clon">Longitud E (°)</label><input type="number" id="clon" step="any" placeholder="12.0" inputmode="decimal"></div>
+          <div class="field"><label class="lbl" for="cname">Nombre (opcional)</label><input type="text" id="cname" maxlength="28" placeholder="Mi sitio"></div>
+          <button class="btn" type="submit">Agregar</button>
+        </form>
+        <p class="msg" id="cmsg" role="status"></p>
+      </details>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-comp">
+    <h2 id="h-comp">Comparación</h2>
+    <p class="sub">Toca el nombre de un sitio para ver su horizonte abajo. Toca o arrastra sobre una línea de tiempo para mover el momento.</p>
+    <div class="legend" aria-hidden="true">
+      <span><i class="sw sun"></i>Sol sobre el horizonte</span>
+      <span><i class="sw earth"></i>Tierra a la vista (enlace directo posible)</span>
+      <span><i class="sw"></i>No visible</span>
+    </div>
+    <div class="list" id="listwrap">
+      <div class="axis" id="axis" aria-hidden="true"><span class="spacer"></span><div class="ticks" id="ticks"></div></div>
+      <div id="board" class="list" style="margin-top:0"></div>
+    </div>
+    <p class="note">El horizonte de cada sitio es una línea plana a la altura que indiques (0° por defecto). Todavía no se usa el relieve real del terreno, así que los valores son los de un terreno liso y sirven para comparar, no para decidir un aterrizaje.</p>
+  </section>
+
+  <section aria-labelledby="h-pano">
+    <h2 id="h-pano">Horizonte</h2>
+    <p class="sub" id="panosub"></p>
+    <div class="pano" id="panowrap">
+      <div id="panosvg"></div>
+      <div class="timebar">
+        <button class="btn ghost" type="button" id="play" aria-pressed="false">Reproducir</button>
+        <input type="range" id="tslider" min="0" max="0" value="0" aria-label="Momento dentro del periodo">
+        <span class="tnow" id="tnow"></span>
+      </div>
+      <div class="tablewrap">
+        <table class="read" aria-live="polite">
+          <thead><tr><th>Cuerpo</th><th>Acimut</th><th>Elevación</th><th>Estado</th></tr></thead>
+          <tbody id="readout"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <details class="how">
+    <summary>Cómo se calcula y qué falta</summary>
+    <ul>
+      <li>Posiciones de la Luna y el Sol: biblioteca astronomy-engine. Orientación de la Luna: modelo IAU 2009 (marco de Tierra media y eje de rotación). Todo en UTC con pasos de una hora.</li>
+      <li>Contraste con PyEphem en 80 fechas entre 2026 y 2030: la dirección de la Tierra coincide dentro de 0,03° y la del Sol dentro de 0,3°. No se contrastó contra SPICE de la NASA.</li>
+      <li>Sol: cuenta como visible cuando su borde superior pasa el horizonte indicado. Tierra: cuando su centro lo pasa. La Tierra se calcula con paralaje, vista desde la superficie y no desde el centro de la Luna.</li>
+      <li>Acimut: 0° es el norte local y crece hacia el este. En los polos el norte local es la dirección del meridiano 0°.</li>
+      <li>Falta el relieve real (modelo de elevación LOLA del orbitador LRO). Con él, el horizonte sería una silueta distinta para cada sitio y las zonas de sombra permanente aparecerían solas.</li>
+      <li>El enlace directo con la Tierra aquí solo pide verla sobre el horizonte. No considera ángulo mínimo de antena ni disponibilidad de estaciones en la Tierra.</li>
+    </ul>
+  </details>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
+<script>
+// Motor de cálculo: posición del Sol y la Tierra vistos desde un punto de la Luna.
+// Usa astronomy-engine (Moon/Sun geocéntricos, J2000) + orientación lunar IAU 2009.
+var LunarEngine = (function (Astronomy) {
+  'use strict';
+  var DEG = Math.PI / 180;
+  var R_MOON = 1737.4;          // km, radio medio
+  var AU_KM = 149597870.7;
+
+  // Orientación de la Luna (IAU WGCCRE 2009): polo (a0, d0) y meridiano de origen W, en grados.
+  function frame(d) { // d: días TT desde J2000
+    var T = d / 36525;
+    var E1 = (125.045 - 0.0529921 * d) * DEG;
+    var E2 = (250.089 - 0.1059842 * d) * DEG;
+    var E3 = (260.008 + 13.0120009 * d) * DEG;
+    var E4 = (176.625 + 13.3407154 * d) * DEG;
+    var E5 = (357.529 + 0.9856003 * d) * DEG;
+    var E6 = (311.589 + 26.4057084 * d) * DEG;
+    var E7 = (134.963 + 13.0649930 * d) * DEG;
+    var E8 = (276.617 + 0.3287146 * d) * DEG;
+    var E9 = (34.226 + 1.7484877 * d) * DEG;
+    var E10 = (15.134 - 0.1589763 * d) * DEG;
+    var E11 = (119.743 + 0.0036096 * d) * DEG;
+    var E12 = (239.961 + 0.1643573 * d) * DEG;
+    var E13 = (25.053 + 12.9590088 * d) * DEG;
+    var s = Math.sin, c = Math.cos;
+    var a0 = 269.9949 + 0.0031 * T - 3.8787 * s(E1) - 0.1204 * s(E2) + 0.0700 * s(E3) -
+      0.0172 * s(E4) + 0.0072 * s(E6) - 0.0052 * s(E10) + 0.0043 * s(E13);
+    var d0 = 66.5392 + 0.0130 * T + 1.5419 * c(E1) + 0.0239 * c(E2) - 0.0278 * c(E3) +
+      0.0068 * c(E4) - 0.0029 * c(E6) + 0.0009 * c(E7) + 0.0008 * c(E10) - 0.0009 * c(E13);
+    var W = 38.3213 + 13.17635815 * d - 1.4e-12 * d * d + 3.5610 * s(E1) + 0.1208 * s(E2) -
+      0.0642 * s(E3) + 0.0158 * s(E4) + 0.0252 * s(E5) - 0.0066 * s(E6) - 0.0047 * s(E7) -
+      0.0046 * s(E8) + 0.0028 * s(E9) + 0.0052 * s(E10) + 0.0040 * s(E11) + 0.0019 * s(E12) -
+      0.0044 * s(E13);
+    return { a0: a0, d0: d0, W: W };
+  }
+
+  // Vector inercial (EQJ) -> vector fijo a la Luna (marco de Tierra media / eje de rotación).
+  function toBody(x, y, z, fr) {
+    var a = (90 + fr.a0) * DEG, c = Math.cos(a), s = Math.sin(a);
+    var x1 = c * x + s * y, y1 = -s * x + c * y, z1 = z;
+    a = (90 - fr.d0) * DEG; c = Math.cos(a); s = Math.sin(a);
+    var y2 = c * y1 + s * z1, z2 = -s * y1 + c * z1;
+    a = fr.W * DEG; c = Math.cos(a); s = Math.sin(a);
+    return [c * x1 + s * y2, -s * x1 + c * y2, z2];
+  }
+
+  // Vectores Luna->Sol y Luna->Tierra en el marco lunar (km) en cada paso.
+  function bodyVectors(date) {
+    var t = Astronomy.MakeTime(date);
+    var fr = frame(t.tt);
+    var m = Astronomy.GeoMoon(t);
+    var sun = Astronomy.GeoVector('Sun', t, false);
+    var sunV = toBody((sun.x - m.x) * AU_KM, (sun.y - m.y) * AU_KM, (sun.z - m.z) * AU_KM, fr);
+    var earthV = toBody(-m.x * AU_KM, -m.y * AU_KM, -m.z * AU_KM, fr);
+    return { sun: sunV, earth: earthV };
+  }
+
+  function subPoint(v) {
+    var r = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    return { lon: Math.atan2(v[1], v[0]) / DEG, lat: Math.asin(v[2] / r) / DEG, dist: r };
+  }
+
+  // Acimut (desde el norte local, hacia el este) y elevación de un cuerpo visto desde un sitio.
+  function siteBasis(latDeg, lonDeg) {
+    var p = latDeg * DEG, l = lonDeg * DEG;
+    var sp = Math.sin(p), cp = Math.cos(p), sl = Math.sin(l), cl = Math.cos(l);
+    return { n: [cp * cl, cp * sl, sp], e: [-sl, cl, 0], no: [-sp * cl, -sp * sl, cp] };
+  }
+
+  function sky(v, b) {
+    var tx = v[0] - R_MOON * b.n[0], ty = v[1] - R_MOON * b.n[1], tz = v[2] - R_MOON * b.n[2];
+    var up = tx * b.n[0] + ty * b.n[1] + tz * b.n[2];
+    var east = tx * b.e[0] + ty * b.e[1] + tz * b.e[2];
+    var north = tx * b.no[0] + ty * b.no[1] + tz * b.no[2];
+    var dist = Math.sqrt(tx * tx + ty * ty + tz * tz);
+    var az = Math.atan2(east, north) / DEG;
+    if (az < 0) az += 360;
+    return { az: az, el: Math.asin(up / dist) / DEG };
+  }
+
+  // Efemérides del periodo: hours+1 muestras horarias desde startMs (UTC).
+  function buildEphemeris(startMs, hours, stepHours) {
+    var step = stepHours || 1;
+    var n = Math.floor(hours / step) + 1;
+    var sun = new Float64Array(n * 3), earth = new Float64Array(n * 3);
+    for (var i = 0; i < n; i++) {
+      var bv = bodyVectors(new Date(startMs + i * step * 3600000));
+      sun[3 * i] = bv.sun[0]; sun[3 * i + 1] = bv.sun[1]; sun[3 * i + 2] = bv.sun[2];
+      earth[3 * i] = bv.earth[0]; earth[3 * i + 1] = bv.earth[1]; earth[3 * i + 2] = bv.earth[2];
+    }
+    return { startMs: startMs, step: step, n: n, sun: sun, earth: earth };
+  }
+
+  function siteSky(eph, latDeg, lonDeg) {
+    var b = siteBasis(latDeg, lonDeg), n = eph.n;
+    var az = { sun: new Float32Array(n), earth: new Float32Array(n) };
+    var el = { sun: new Float32Array(n), earth: new Float32Array(n) };
+    var v = [0, 0, 0];
+    for (var i = 0; i < n; i++) {
+      v[0] = eph.sun[3 * i]; v[1] = eph.sun[3 * i + 1]; v[2] = eph.sun[3 * i + 2];
+      var s = sky(v, b); az.sun[i] = s.az; el.sun[i] = s.el;
+      v[0] = eph.earth[3 * i]; v[1] = eph.earth[3 * i + 1]; v[2] = eph.earth[3 * i + 2];
+      var e = sky(v, b); az.earth[i] = e.az; el.earth[i] = e.el;
+    }
+    return { az: az, el: el };
+  }
+
+  return {
+    DEG: DEG, R_MOON: R_MOON, frame: frame, toBody: toBody, bodyVectors: bodyVectors,
+    subPoint: subPoint, siteBasis: siteBasis, sky: sky,
+    buildEphemeris: buildEphemeris, siteSky: siteSky
+  };
+})(typeof Astronomy !== 'undefined' ? Astronomy : require('astronomy-engine'));
+
+if (typeof module !== 'undefined') module.exports = LunarEngine;
+
+</script>
+<script>
+(function () {
+  'use strict';
+  var E = window.LunarEngine;
+  var board = document.getElementById('board');
+  if (!window.Astronomy || !E) {
+    board.innerHTML = '<p class="err">No se pudo cargar la biblioteca de efemérides. Revisa tu conexión y recarga la página.</p>';
+    return;
+  }
+
+  var SUN_R = 0.2665, SUN_D = 0.533, EARTH_D = 1.9, MAXSITES = 6;
+  var MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+  var PRESETS = [
+    { id: 'malapert', name: 'Macizo Malapert', lat: -86.0, lon: 0.0 },
+    { id: 'shackleton', name: 'Cráter Shackleton', lat: -89.9, lon: 129.8 },
+    { id: 'haworth', name: 'Cráter Haworth', lat: -87.5, lon: -5.0 },
+    { id: 'nobile', name: 'Cráter Nobile', lat: -85.2, lon: 53.3 },
+    { id: 'faustini', name: 'Cráter Faustini', lat: -87.3, lon: 77.0 },
+    { id: 'degerlache', name: 'Cráter de Gerlache', lat: -88.5, lon: -87.1 },
+    { id: 'cabeus', name: 'Cráter Cabeus', lat: -84.9, lon: -35.5 },
+    { id: 'amundsen', name: 'Cráter Amundsen', lat: -84.5, lon: 82.8 }
+  ];
+  var DEFAULT_ON = ['malapert', 'shackleton', 'haworth', 'nobile'];
+
+  var sites = PRESETS.map(function (p) { return { id: p.id, name: p.name, lat: p.lat, lon: p.lon, on: DEFAULT_ON.indexOf(p.id) >= 0, mask: 0 }; });
+  var customCount = 0;
+  var selId = 'malapert';
+  var days = 30, eph = null, n = 0, cursor = 0;
+  var cache = {}, playing = false, rafId = 0, lastT = 0, carry = 0;
+
+  var el = {
+    start: document.getElementById('start'), chips: document.getElementById('chips'), hint: document.getElementById('chiphint'),
+    ticks: document.getElementById('ticks'), pano: document.getElementById('panosvg'), panowrap: document.getElementById('panowrap'),
+    panosub: document.getElementById('panosub'), slider: document.getElementById('tslider'), tnow: document.getElementById('tnow'),
+    read: document.getElementById('readout'), play: document.getElementById('play'), form: document.getElementById('addform'),
+    cmsg: document.getElementById('cmsg')
+  };
+
+  /* ---------- utilidades ---------- */
+  function pad(v) { return v < 10 ? '0' + v : '' + v; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function num(v, d) { return v.toFixed(d).replace('.', ','); }
+  function signed(v, d) { var s = v.toFixed(d).replace('.', ','); if (v < 0 && /^-/.test(s)) return '−' + s.slice(1); return (v >= 0 ? '+' : '') + s; }
+  function fmtDate(ms) { var d = new Date(ms); return d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
+  function fmtDay(ms) { var d = new Date(ms); return d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()]; }
+  function fmtDT(ms) { var d = new Date(ms); return fmtDate(ms) + ' · ' + pad(d.getUTCHours()) + ':00 UTC'; }
+  function fmtLat(v) { return num(Math.abs(v), 1) + '° ' + (v < 0 ? 'S' : 'N'); }
+  function fmtLon(v) { return num(Math.abs(v), 1) + '° ' + (v < 0 ? 'O' : 'E'); }
+  function fmtHours(h, edge) {
+    var s;
+    if (h <= 0) return 'ninguna';
+    if (h < 24) s = h + ' h';
+    else { var d = Math.floor(h / 24), r = h % 24; s = d + ' d' + (r ? ' ' + r + ' h' : ''); }
+    return (edge ? '≥ ' : '') + s;
+  }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function selectedSites() { return sites.filter(function (s) { return s.on; }); }
+  function siteById(id) { return sites.filter(function (s) { return s.id === id; })[0]; }
+  function todayISO() { var d = new Date(); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()); }
+  function startMs() {
+    var v = el.start.value, m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+    if (!m) return null;
+    return Date.UTC(+m[1], +m[2] - 1, +m[3]);
+  }
+
+  /* ---------- cálculo por sitio ---------- */
+  function getSky(s) {
+    var key = s.lat + '|' + s.lon;
+    if (!cache[key]) cache[key] = E.siteSky(eph, s.lat, s.lon);
+    return cache[key];
+  }
+  function visibility(sd, mask) {
+    var sun = new Uint8Array(n), earth = new Uint8Array(n);
+    for (var i = 0; i < n; i++) {
+      sun[i] = sd.el.sun[i] + SUN_R > mask ? 1 : 0;
+      earth[i] = sd.el.earth[i] > mask ? 1 : 0;
+    }
+    return { sun: sun, earth: earth };
+  }
+  function longestZero(a) {
+    var best = 0, bestEdge = false, run = 0, start = 0;
+    for (var i = 0; i <= n; i++) {
+      if (i < n && a[i] === 0) { if (run === 0) start = i; run++; }
+      else if (run > 0) {
+        if (run > best) { best = run; bestEdge = (start === 0 || i === n); }
+        run = 0;
+      }
+    }
+    return { len: best, edge: bestEdge };
+  }
+  function count(a) { var c = 0; for (var i = 0; i < n; i++) c += a[i]; return c; }
+  function runsOfOne(a) {
+    var out = [], st = -1;
+    for (var i = 0; i <= n; i++) {
+      if (i < n && a[i] === 1) { if (st < 0) st = i; }
+      else if (st >= 0) { out.push([st, i]); st = -1; }
+    }
+    return out;
+  }
+  function metrics(s) {
+    var v = visibility(getSky(s), s.mask);
+    return {
+      vis: v,
+      sunPct: 100 * count(v.sun) / n, earthPct: 100 * count(v.earth) / n,
+      dark: longestZero(v.sun), gap: longestZero(v.earth)
+    };
+  }
+
+  /* ---------- ticks y tarjetas ---------- */
+  function tickStep(width) {
+    var max = Math.max(2, Math.floor(width / 84)), c = [1, 2, 5, 7, 10, 14, 30, 61, 91, 122];
+    for (var i = 0; i < c.length; i++) if (days / c[i] <= max) return c[i];
+    return 122;
+  }
+  function tickList() {
+    var step = tickStep(board.clientWidth || 600), out = [];
+    for (var d = 0; d < days; d += step) out.push(d);
+    return out;
+  }
+  function drawAxis() {
+    var t0 = startMs(), html = '';
+    tickList().forEach(function (d) {
+      var pct = d * 24 / n * 100;
+      if (pct > 92) return;
+      html += '<span class="tl" style="left:' + pct.toFixed(2) + '%">' + fmtDay(t0 + d * 86400000) + '</span>';
+    });
+    el.ticks.innerHTML = html;
+  }
+  function gridHTML() {
+    var h = '';
+    tickList().forEach(function (d) { if (d > 0) h += '<i class="gl" style="left:' + (d * 24 / n * 100).toFixed(2) + '%"></i>'; });
+    return h;
+  }
+  function runsHTML(arr, cls) {
+    return runsOfOne(arr).map(function (r) {
+      return '<i class="run ' + cls + '" style="left:' + (r[0] / n * 100).toFixed(3) + '%;width:' + ((r[1] - r[0]) / n * 100).toFixed(3) + '%"></i>';
+    }).join('');
+  }
+  function cursorHTML() { return '<i class="cursor" style="left:' + ((cursor + 0.5) / n * 100).toFixed(3) + '%"></i>'; }
+
+  function makeCard(s) {
+    var c = document.createElement('article');
+    c.className = 'card';
+    c.dataset.id = s.id;
+    c.innerHTML =
+      '<div class="ident">' +
+        '<button type="button" class="pick">' + esc(s.name) + '</button>' +
+        '<p class="co">' + fmtLat(s.lat) + ' · ' + fmtLon(s.lon) + '</p>' +
+        '<label class="maskl">Horizonte local <input type="number" class="mask-in" min="0" max="20" step="0.5" value="' + s.mask + '" inputmode="decimal" aria-label="Elevación del horizonte local de ' + esc(s.name) + ' en grados"> °</label>' +
+      '</div>' +
+      '<div class="m m-sun"><span class="ml">Con Sol</span><span class="mv" data-k="sunPct"></span><span class="mbar"><i></i></span><span class="ms">del periodo</span></div>' +
+      '<div class="m"><span class="ml">Noche más larga</span><span class="mv" data-k="dark"></span><span class="ms">sin Sol, seguida</span></div>' +
+      '<div class="m m-earth"><span class="ml">Con Tierra</span><span class="mv" data-k="earthPct"></span><span class="mbar"><i></i></span><span class="ms">del periodo</span></div>' +
+      '<div class="m"><span class="ml">Sin enlace más largo</span><span class="mv" data-k="gap"></span><span class="ms">sin ver la Tierra, seguido</span></div>' +
+      '<div class="strips">' +
+        '<div class="srow"><span class="slab">Sol</span><div class="track" data-k="sun"></div></div>' +
+        '<div class="srow"><span class="slab">Tierra</span><div class="track" data-k="earth"></div></div>' +
+      '</div>';
+    return c;
+  }
+
+  var mcache = {};
+  function fillCard(c, s) {
+    var m = metrics(s);
+    mcache[s.id] = m;
+    function setv(k, html) { c.querySelector('[data-k="' + k + '"]').innerHTML = html; }
+    setv('sunPct', num(m.sunPct, 1) + ' %');
+    setv('earthPct', num(m.earthPct, 1) + ' %');
+    setv('dark', fmtHours(m.dark.len, m.dark.edge));
+    setv('gap', fmtHours(m.gap.len, m.gap.edge));
+    c.querySelector('.m-sun .mbar i').style.width = m.sunPct.toFixed(1) + '%';
+    c.querySelector('.m-earth .mbar i').style.width = m.earthPct.toFixed(1) + '%';
+    fillStrips(c, s);
+  }
+  function fillStrips(c, s) {
+    var m = mcache[s.id], g = gridHTML();
+    if (!m) return;
+    c.querySelector('.track[data-k="sun"]').innerHTML = runsHTML(m.vis.sun, 'sun') + g + cursorHTML();
+    c.querySelector('.track[data-k="earth"]').innerHTML = runsHTML(m.vis.earth, 'earth') + g + cursorHTML();
+  }
+  function markBest() {
+    var cards = [].slice.call(board.querySelectorAll('.card'));
+    cards.forEach(function (c) { [].slice.call(c.querySelectorAll('.best')).forEach(function (b) { b.remove(); }); });
+    if (cards.length < 2) return;
+    var specs = [['sunPct', 1, function (m) { return m.sunPct; }], ['dark', -1, function (m) { return m.dark.len; }],
+                 ['earthPct', 1, function (m) { return m.earthPct; }], ['gap', -1, function (m) { return m.gap.len; }]];
+    specs.forEach(function (sp) {
+      var vals = cards.map(function (c) { return sp[2](mcache[c.dataset.id]); });
+      var best = sp[1] > 0 ? Math.max.apply(null, vals) : Math.min.apply(null, vals);
+      var worst = sp[1] > 0 ? Math.min.apply(null, vals) : Math.max.apply(null, vals);
+      if (best === worst) return;
+      cards.forEach(function (c, i) {
+        if (vals[i] === best) c.querySelector('[data-k="' + sp[0] + '"]').insertAdjacentHTML('beforeend', '<span class="best" title="Mejor valor del grupo">mejor</span>');
+      });
+    });
+  }
+  function buildBoard() {
+    board.innerHTML = '';
+    var list = selectedSites();
+    list.forEach(function (s) { var c = makeCard(s); board.appendChild(c); fillCard(c, s); });
+    markBest();
+    markSelected();
+  }
+  function markSelected() {
+    [].forEach.call(board.querySelectorAll('.card'), function (c) {
+      var on = c.dataset.id === selId;
+      c.classList.toggle('sel', on);
+      c.querySelector('.pick').setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  /* ---------- chips de sitios ---------- */
+  function renderChips() {
+    var onCount = selectedSites().length;
+    el.chips.innerHTML = '';
+    sites.forEach(function (s) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.dataset.id = s.id;
+      b.setAttribute('aria-pressed', s.on ? 'true' : 'false');
+      b.disabled = !s.on && onCount >= MAXSITES;
+      if (b.disabled) b.title = 'Ya elegiste ' + MAXSITES + ' sitios';
+      b.innerHTML = esc(s.name) + '<small>' + fmtLat(s.lat) + ' · ' + fmtLon(s.lon) + '</small>';
+      el.chips.appendChild(b);
+    });
+  }
+
+  /* ---------- horizonte (SVG) ---------- */
+  var geo = null;
+  var CARD = { 0: 'N', 45: 'NE', 90: 'E', 135: 'SE', 180: 'S', 225: 'SO', 270: 'O', 315: 'NO', 360: 'N' };
+  function drawPano() {
+    var s = siteById(selId);
+    if (!s || !eph) return;
+    var sd = getSky(s);
+    var W = Math.max(280, Math.floor(el.panowrap.clientWidth - 24)), narrow = W < 560, H = narrow ? 250 : 310;
+    var padL = 46, padR = 14, padT = 16, padB = 30, pw = W - padL - padR, ph = H - padT - padB;
+    var mn = 99, mx = -99;
+    for (var i = 0; i < n; i++) {
+      mn = Math.min(mn, sd.el.sun[i], sd.el.earth[i]); mx = Math.max(mx, sd.el.sun[i], sd.el.earth[i]);
+    }
+    var ymin = Math.min(-4, Math.floor(mn) - 1), ymax = Math.max(8, Math.ceil(mx) + 1, s.mask + 4);
+    var yStep = (ymax - ymin) > 28 ? 5 : 2;
+    ymin = Math.floor(ymin / yStep) * yStep; ymax = Math.ceil(ymax / yStep) * yStep;
+    function X(a) { return padL + a / 360 * pw; }
+    function Y(e) { return padT + (ymax - e) / (ymax - ymin) * ph; }
+    geo = { X: X, Y: Y, pxDeg: ph / (ymax - ymin), padL: padL, pw: pw, W: W };
+    var out = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Posición del Sol y la Tierra respecto al horizonte de ' + esc(s.name) + '">';
+    out += '<rect class="s-plot" x="' + padL + '" y="' + padT + '" width="' + pw + '" height="' + ph + '"/>';
+    var y;
+    for (y = Math.ceil(ymin / yStep) * yStep; y <= ymax; y += yStep) {
+      out += '<line class="s-grid" x1="' + padL + '" x2="' + (padL + pw) + '" y1="' + Y(y).toFixed(1) + '" y2="' + Y(y).toFixed(1) + '"/>';
+      out += '<text class="s-ax" x="' + (padL - 8) + '" y="' + (Y(y) + 4).toFixed(1) + '" text-anchor="end">' + signed(y, 0) + '°</text>';
+    }
+    var a, step = narrow ? 90 : 45;
+    for (a = 0; a <= 360; a += step) {
+      out += '<line class="s-grid" x1="' + X(a).toFixed(1) + '" x2="' + X(a).toFixed(1) + '" y1="' + padT + '" y2="' + (padT + ph) + '"/>';
+      var anchor = a === 0 ? 'start' : a === 360 ? 'end' : 'middle';
+      out += '<text class="s-ax" x="' + X(a).toFixed(1) + '" y="' + (H - 10) + '" text-anchor="' + anchor + '">' + CARD[a] + (a % 90 === 0 ? ' ' + a + '°' : '') + '</text>';
+    }
+    var yh = Y(s.mask);
+    out += '<rect class="s-terrain" x="' + padL + '" y="' + yh.toFixed(1) + '" width="' + pw + '" height="' + Math.max(0, padT + ph - yh).toFixed(1) + '"/>';
+    if (s.mask !== 0) out += '<line class="s-zero" x1="' + padL + '" x2="' + (padL + pw) + '" y1="' + Y(0).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '"/>';
+    out += '<line class="s-hz" x1="' + padL + '" x2="' + (padL + pw) + '" y1="' + yh.toFixed(1) + '" y2="' + yh.toFixed(1) + '"/>';
+    out += '<text class="s-ax" x="' + (padL + pw - 6) + '" y="' + Math.min(padT + ph - 6, yh + 15).toFixed(1) + '" text-anchor="end">horizonte local ' + signed(s.mask, 1) + '°</text>';
+    var k = Math.max(1, Math.ceil(n / 1500));
+    ['sun', 'earth'].forEach(function (b) {
+      var d = '', prev = null;
+      for (var i = 0; i < n; i += k) {
+        var az = sd.az[b][i], e = sd.el[b][i];
+        d += (prev === null || Math.abs(az - prev) > 180 ? 'M' : 'L') + X(az).toFixed(1) + ' ' + Y(e).toFixed(1);
+        prev = az;
+      }
+      out += '<path class="s-p' + b + '" d="' + d + '"/>';
+    });
+    out += '<g id="mk"></g></svg>';
+    el.pano.innerHTML = out;
+    drawMarkers();
+  }
+  function drawMarkers() {
+    var s = siteById(selId), g = document.getElementById('mk');
+    if (!s || !g || !geo) return;
+    var sd = getSky(s), i = cursor, html = '';
+    [['sun', 'Sol', Math.max(3, SUN_D / 2 * geo.pxDeg), sd.el.sun[i] + SUN_R > s.mask],
+     ['earth', 'Tierra', Math.max(5, EARTH_D / 2 * geo.pxDeg), sd.el.earth[i] > s.mask]].forEach(function (b) {
+      var cx = geo.X(sd.az[b[0]][i]), cy = geo.Y(sd.el[b[0]][i]);
+      html += '<circle class="s-m' + b[0] + (b[3] ? '' : ' s-moff') + '" cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + b[2].toFixed(1) + '"/>';
+      var tx = clamp(cx, geo.padL + 22, geo.padL + geo.pw - 22);
+      html += '<text class="s-lbl" x="' + tx.toFixed(1) + '" y="' + (cy - b[2] - 6).toFixed(1) + '" text-anchor="middle">' + b[1] + '</text>';
+    });
+    g.innerHTML = html;
+  }
+  function drawReadout() {
+    var s = siteById(selId);
+    if (!s || !eph) return;
+    var sd = getSky(s), i = cursor;
+    function row(cls, name, az, e, on, onTxt, offTxt) {
+      return '<tr><td><span class="dot ' + cls + '"></span>' + name + '</td><td>' + num(az, 1) + '°</td><td>' + signed(e, 1) + '°</td><td class="' + (on ? 'state-on' : '') + '">' + (on ? onTxt : offTxt) + '</td></tr>';
+    }
+    var su = sd.el.sun[i] + SUN_R > s.mask, ea = sd.el.earth[i] > s.mask;
+    el.read.innerHTML =
+      row('sun', 'Sol', sd.az.sun[i], sd.el.sun[i], su, 'sobre el horizonte', 'bajo el horizonte') +
+      row('earth', 'Tierra', sd.az.earth[i], sd.el.earth[i], ea, 'a la vista', 'oculta');
+  }
+  function panoHeading() {
+    var s = siteById(selId);
+    if (!s) return;
+    el.panosub.textContent = s.name + ' (' + fmtLat(s.lat) + ', ' + fmtLon(s.lon) + '). Sol y Tierra dibujados a escala angular. Las líneas finas son sus trayectorias durante todo el periodo. Acimut desde el norte local.';
+  }
+
+  /* ---------- cursor de tiempo ---------- */
+  function setCursor(i) {
+    cursor = clamp(i, 0, n - 1);
+    var pct = ((cursor + 0.5) / n * 100).toFixed(3) + '%';
+    [].forEach.call(board.querySelectorAll('.cursor'), function (c) { c.style.left = pct; });
+    el.slider.value = cursor;
+    var ms = startMs() + cursor * 3600000;
+    el.tnow.textContent = fmtDT(ms);
+    el.slider.setAttribute('aria-valuetext', fmtDT(ms));
+    drawReadout();
+    drawMarkers();
+  }
+
+  /* ---------- reproducción ---------- */
+  function stopPlay() {
+    playing = false; cancelAnimationFrame(rafId);
+    el.play.textContent = 'Reproducir'; el.play.setAttribute('aria-pressed', 'false');
+  }
+  function frame(t) {
+    if (!playing) return;
+    var dt = (t - lastT) / 1000; lastT = t;
+    carry += dt * Math.max(24, n / 30);
+    var adv = Math.floor(carry);
+    if (adv > 0) { carry -= adv; setCursor((cursor + adv) % n); }
+    rafId = requestAnimationFrame(frame);
+  }
+  el.play.addEventListener('click', function () {
+    if (playing) { stopPlay(); return; }
+    playing = true; carry = 0; lastT = performance.now();
+    el.play.textContent = 'Pausar'; el.play.setAttribute('aria-pressed', 'true');
+    rafId = requestAnimationFrame(frame);
+  });
+
+  /* ---------- eventos ---------- */
+  var dragging = null;
+  function scrub(e) {
+    var r = dragging.getBoundingClientRect();
+    setCursor(Math.floor(clamp((e.clientX - r.left) / r.width, 0, 0.9999) * n));
+  }
+  board.addEventListener('pointerdown', function (e) {
+    var tr = e.target.closest('.track');
+    if (!tr) return;
+    dragging = tr;
+    try { tr.setPointerCapture(e.pointerId); } catch (x) {}
+    scrub(e);
+  });
+  board.addEventListener('pointermove', function (e) { if (dragging) scrub(e); });
+  ['pointerup', 'pointercancel'].forEach(function (t) { board.addEventListener(t, function () { dragging = null; }); });
+  board.addEventListener('click', function (e) {
+    var p = e.target.closest('.pick');
+    if (!p) return;
+    selId = p.closest('.card').dataset.id;
+    markSelected(); panoHeading(); drawPano(); drawReadout();
+  });
+  board.addEventListener('change', function (e) {
+    if (!e.target.classList.contains('mask-in')) return;
+    var c = e.target.closest('.card'), s = siteById(c.dataset.id);
+    var v = parseFloat(String(e.target.value).replace(',', '.'));
+    s.mask = isFinite(v) ? clamp(Math.round(v * 2) / 2, 0, 20) : 0;
+    e.target.value = s.mask;
+    fillCard(c, s); markBest();
+    if (s.id === selId) { drawPano(); drawReadout(); }
+  });
+  el.slider.addEventListener('input', function () { setCursor(+el.slider.value); });
+
+  el.chips.addEventListener('click', function (e) {
+    var b = e.target.closest('.chip');
+    if (!b || b.disabled) return;
+    var s = siteById(b.dataset.id);
+    if (s.on && selectedSites().length === 1) { el.hint.textContent = 'Deja al menos un sitio elegido.'; return; }
+    el.hint.textContent = 'Coordenadas aproximadas del centro de cada cráter o macizo.';
+    s.on = !s.on;
+    if (!siteById(selId).on) selId = selectedSites()[0].id;
+    renderChips(); buildBoard(); panoHeading(); drawPano(); drawReadout();
+  });
+
+  el.form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var lat = parseFloat(document.getElementById('clat').value), lon = parseFloat(document.getElementById('clon').value);
+    if (!isFinite(lat) || lat < -90 || lat > 90) { el.cmsg.textContent = 'La latitud debe estar entre -90 y 90 grados.'; return; }
+    if (!isFinite(lon) || lon < -180 || lon > 360) { el.cmsg.textContent = 'La longitud debe estar entre -180 y 360 grados este.'; return; }
+    if (lon > 180) lon -= 360;
+    customCount++;
+    var name = document.getElementById('cname').value.trim() || ('Sitio ' + num(lat, 1) + ', ' + num(lon, 1));
+    var turnOn = selectedSites().length < MAXSITES;
+    sites.push({ id: 'c' + customCount, name: name, lat: lat, lon: lon, on: turnOn, mask: 0 });
+    el.cmsg.textContent = turnOn ? '' : 'Sitio agregado, pero ya hay ' + MAXSITES + ' elegidos. Quita uno para verlo.';
+    el.form.reset();
+    renderChips(); buildBoard(); drawPano(); drawReadout();
+  });
+
+  document.querySelectorAll('input[name="dur"]').forEach(function (r) {
+    r.addEventListener('change', function () { days = +r.value; recompute(); });
+  });
+  el.start.addEventListener('change', function () { recompute(); });
+
+  var raf2 = 0, lastBW = 0, lastPW = 0;
+  function onResize() {
+    cancelAnimationFrame(raf2);
+    raf2 = requestAnimationFrame(function () {
+      if (!eph) return;
+      var bw = board.clientWidth, pwid = el.panowrap.clientWidth;
+      if (Math.abs(bw - lastBW) < 1 && Math.abs(pwid - lastPW) < 1) return;
+      lastBW = bw; lastPW = pwid;
+      drawAxis();
+      [].forEach.call(board.querySelectorAll('.card'), function (c) { fillStrips(c, siteById(c.dataset.id)); });
+      drawPano();
+    });
+  }
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(onResize);
+    ro.observe(board); ro.observe(el.panowrap);
+  } else window.addEventListener('resize', onResize);
+
+  /* ---------- recalcular el periodo ---------- */
+  function recompute() {
+    stopPlay();
+    var t0 = startMs();
+    if (t0 === null) { el.start.value = todayISO(); t0 = startMs(); }
+    eph = E.buildEphemeris(t0, days * 24 - 1, 1);
+    n = eph.n; cache = {}; mcache = {};
+    el.slider.max = n - 1;
+    cursor = Math.min(cursor, n - 1);
+    drawAxis(); buildBoard(); panoHeading(); drawPano();
+    setCursor(cursor);
+  }
+
+  el.start.value = todayISO();
+  renderChips();
+  recompute();
+})();
+</script>
+
+</body></html>
